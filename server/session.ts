@@ -85,16 +85,16 @@ export class ProjectSession {
   /** 新项目的第一轮：让 Agent 按 skill 开始研究产品、起草 brief */
   kickoff(): Promise<void> {
     return this.send(
-      `开始为「${this.project.name}」生成 Landing Page`,
+      `Generate a landing page for ${this.project.name}`,
       undefined,
       kickoffPrompt(this.project),
     );
   }
 
   async send(text: string, picks?: PickedElement[], promptOverride?: string): Promise<void> {
-    if (this.running) throw new BusyError("Agent 还在处理上一条消息");
+    if (this.running) throw new BusyError("Your agent is still processing the previous message");
     const trimmed = text.trim();
-    if (!trimmed) throw new Error("消息不能为空");
+    if (!trimmed) throw new Error("Message cannot be empty");
 
     const userItem: ChatItem = {
       id: `user-${Date.now()}`,
@@ -151,9 +151,9 @@ export class ProjectSession {
         }
       }
       if (result.stopped) {
-        await this.record(sys("已停止本轮。", "info"));
+        await this.record(sys("Turn stopped.", "info"));
       } else if (!result.ok) {
-        await this.record(sys(`Agent 出错：${result.error ?? "未知错误"}`, "error"));
+        await this.record(sys(`Agent error: ${result.error ?? "Unknown error"}`, "error"));
       }
       this.turn = undefined;
       this.emit({ type: "turn", running: false });
@@ -166,14 +166,14 @@ export class ProjectSession {
   }
 
   async setAgent(agent: AgentKind): Promise<void> {
-    if (this.running) throw new BusyError("Agent 正在运行，停止后再切换");
+    if (this.running) throw new BusyError("Stop the running agent before switching");
     if (agent === this.project.agent) return;
     this.project = { ...this.project, agent };
     await saveProject(this.project);
     this.emit({ type: "project", project: this.project });
     await this.record(
       sys(
-        `已切换到 ${agent === "claude" ? "Claude Code" : "Codex"}。新 Agent 会读取项目里的 AGENTS.md 和已生成的站点继续工作。`,
+        `Switched to ${agent === "claude" ? "Claude Code" : "Codex"}. The new agent will read the project instructions and existing site to continue.`,
         "info",
       ),
     );

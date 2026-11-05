@@ -1,0 +1,34 @@
+import { chromium } from '@playwright/test';
+import { mkdirSync,writeFileSync } from 'node:fs';
+const id=process.argv[2]; if(!id) throw Error('Pass project id');
+const browser=await chromium.launch({channel:'chrome'});
+const page=await browser.newPage({viewport:{width:1440,height:1000}});
+const url=`http://127.0.0.1:4710/#/p/${id}`;
+try {
+ await page.goto(url);
+ await page.getByLabel('给 Agent 的消息').fill('真实截图采集已在 Agent 沙箱外完成。当前项目 captures/brand.json 包含真实桌面截图 product-1.png、手机截图 product-1-phone.png、品牌与 capture.config.json 中请求的焦点坐标。请读取这些文件，把截图复制进 site/public/shots/，填好 site/src/story/shots.json 和相关截图引用，让四幕真实界面滚动演示启用。保留已经修改的标题，不能虚构界面。完成 pnpm test 和 pnpm build。你不用重试受环境限制的浏览器验证，我会从外部通过真实 Chrome 验证并看截图。');
+ await page.getByRole('button',{name:'发送',exact:true}).click();
+ let snap;const deadline=Date.now()+360000;
+ do{await new Promise(r=>setTimeout(r,3000));snap=await (await page.request.get(`http://127.0.0.1:4710/api/projects/${id}`)).json();}while(snap.running && Date.now()<deadline);
+ if(snap.running) throw Error('Agent timed out');
+ console.log(JSON.stringify({stage:'screenshots-integrated',items:snap.items.filter(x=>x.kind==='assistant'||x.level==='error').slice(-3)}));
+ const frame=page.frameLocator('iframe');
+ await frame.locator('h1').waitFor({timeout:30000});
+ await frame.locator('img').first().waitFor({timeout:30000});
+ const broken=await frame.locator('img').evaluateAll(imgs=>imgs.filter(i=>!i.complete||i.naturalWidth===0).map(i=>i.src));
+ if(broken.length)throw Error(`Broken images: ${broken}`);
+ mkdirSync('artifacts',{recursive:true});
+ await page.screenshot({path:'artifacts/live-codex-workspace.png',fullPage:true});
+ const landing=await browser.newPage({viewport:{width:1440,height:1000}});
+ await landing.goto(snap.preview.url);
+ await landing.screenshot({path:'artifacts/live-landing-desktop.png',fullPage:true});
+ await landing.emulateMedia({reducedMotion:'reduce'});
+ await landing.setViewportSize({width:390,height:844});
+ await landing.reload();
+ await landing.locator('h1').waitFor();
+ const overflow=await landing.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+ if(overflow)throw Error('Mobile horizontal overflow');
+ await landing.screenshot({path:'artifacts/live-landing-mobile.png',fullPage:true});
+ writeFileSync('artifacts/live-final-result.json',JSON.stringify({passed:true,id,url,preview:snap.preview,brokenImages:broken,mobileOverflow:overflow},null,2));
+ console.log(JSON.stringify({passed:true,id,url}));
+}catch(e){console.error(e);process.exitCode=1;}finally{await browser.close();}

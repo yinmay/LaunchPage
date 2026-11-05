@@ -12,7 +12,7 @@ interface Props {
   preview: PreviewState;
   running: boolean;
   clearToken: number;
-  onPick: (el: PickedElement) => void;
+  onPick: (el: PickedElement, additive: boolean) => void;
 }
 
 type Tab = "landing" | "video";
@@ -53,7 +53,7 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
       if (e.origin !== origin || e.source !== frame.current?.contentWindow) return;
       const d = e.data as PickerToHost;
       if (d?.source !== "launchpage-preview") return;
-      if (d.type === "picked") onPick(d.element);
+      if (d.type === "picked") onPick(d.element, !!d.additive);
       if (d.type === "pick-mode-off") setPicking(false);
       if (d.type === "ready") {
         // 每次文档加载（含 vite 整页刷新）都会报 ready：把当前框选状态同步过去
@@ -90,9 +90,9 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
   }, [ready]);
 
   return (
-    <section className="preview" aria-label="预览">
+    <section className="preview" aria-label="Preview">
       <div className="preview-bar">
-        <div className="tabs" role="tablist" aria-label="素材类型">
+        <div className="tabs" role="tablist" aria-label="Asset type">
           <button
             type="button"
             role="tab"
@@ -109,7 +109,7 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
             className={`tab${tab === "video" ? " is-active" : ""}`}
             onClick={() => setTab("video")}
           >
-            宣传视频 <span className="badge">即将推出</span>
+            Promo Video <span className="badge">Coming soon</span>
           </button>
         </div>
 
@@ -121,11 +121,11 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
               aria-pressed={picking}
               disabled={!ready}
               onClick={() => setPicking((v) => !v)}
-              title="在预览里点选或拖框选中元素，Esc 退出"
+              title="Click or drag to select elements in the preview. Press Esc to exit."
             >
-              ⌖ {picking ? "框选中（Esc 退出）" : "框选"}
+              ⌖ {picking ? "Selecting (Esc to exit)" : "Select"}
             </button>
-            <div className="seg" role="group" aria-label="预览尺寸">
+            <div className="seg" role="group" aria-label="Preview size">
               {(["desktop", "mobile"] as const).map((d) => (
                 <button
                   key={d}
@@ -134,7 +134,7 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
                   aria-pressed={device === d}
                   onClick={() => setDevice(d)}
                 >
-                  {d === "desktop" ? "桌面" : "手机"}
+                  {d === "desktop" ? "Desktop" : "Mobile"}
                 </button>
               ))}
             </div>
@@ -143,8 +143,8 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
               className="btn btn-tool"
               disabled={!ready}
               onClick={() => setReloadKey((k) => k + 1)}
-              aria-label="刷新预览"
-              title="刷新预览"
+              aria-label="Refresh preview"
+              title="Refresh preview"
             >
               ↻
             </button>
@@ -154,8 +154,8 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
                 href={preview.url}
                 target="_blank"
                 rel="noreferrer"
-                aria-label="在新窗口打开预览"
-                title="在新窗口打开"
+                aria-label="Open preview in a new window"
+                title="Open in a new window"
               >
                 ↗
               </a>
@@ -173,7 +173,7 @@ export function Preview({ projectId, preview, running, clearToken, onPick }: Pro
               key={reloadKey}
               ref={frame}
               src={preview.url}
-              title="Landing Page 实时预览"
+              title="Landing Page live preview"
               className="frame"
             />
           </div>
@@ -201,22 +201,22 @@ function PreviewPlaceholder({
   if (preview.status === "error") {
     return (
       <div className="center-state" role="alert">
-        <p>预览启动失败</p>
+        <p>Preview failed to start</p>
         <pre className="error-log">{preview.error}</pre>
         <button type="button" className="btn btn-primary" onClick={onRestart}>
-          重新启动预览
+          Restart preview
         </button>
       </div>
     );
   }
   const text =
     preview.status === "installing"
-      ? "正在安装站点依赖…"
+      ? "Installing site dependencies…"
       : preview.status === "starting"
-        ? "正在启动预览…"
+        ? "Starting preview…"
         : running
-          ? "Agent 正在研究产品、起草方案，站点生成后会自动出现在这里"
-          : "还没有生成站点。在左侧告诉 Agent 继续即可。";
+          ? "Your agent is researching your product and drafting a plan. Your site will appear here when ready."
+          : "No site yet. Ask your agent to continue in the chat on the left.";
   return (
     <div className="center-state muted" role="status">
       <div className="placeholder-icon" aria-hidden>
@@ -233,8 +233,8 @@ function ComingSoon() {
       <div className="placeholder-icon" aria-hidden>
         ▶
       </div>
-      <p>宣传视频即将推出</p>
-      <p className="muted">下一阶段会基于同一份产品资料和分镜，生成可预览的产品宣传片。</p>
+      <p>Promo videos are coming soon</p>
+      <p className="muted">Create a product promo video from the same product materials and storyboard in a future update.</p>
     </div>
   );
 }

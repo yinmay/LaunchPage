@@ -1,5 +1,5 @@
 import type { Materials, PickedElement, Project } from "../shared/types.ts";
-import { LANDING_SKILL_DIR, SITE_DIRNAME } from "./config.ts";
+import { LANDING_SKILL_DIR, SITE_DIRNAME, SERVER_PORT } from "./config.ts";
 
 /**
  * 写进项目目录的 AGENTS.md（Codex 读）与 CLAUDE.md（Claude Code 读）。
@@ -15,6 +15,9 @@ export function agentsMd(project: Project): string {
 
 - 用 skill 生成 Landing Page：先完整阅读 \`${LANDING_SKILL_DIR}/SKILL.md\`，严格按它的工作流执行。
 - 站点**必须**放在当前目录下的 \`./${SITE_DIRNAME}\`（即 \`cp -R ${LANDING_SKILL_DIR}/template ./${SITE_DIRNAME}\`），用 pnpm 安装依赖。
+- 若沙箱无法启动浏览器，调用本地服务代为采集资料网址的真实截图与品牌：
+  \`curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:${SERVER_PORT}/api/projects/${project.id}/capture\`。
+  返回图片路径和品牌数据，文件位于当前项目的 captures/，可复制到站点 public/shots/ 使用。仅采集下面已提供的产品网址。
 
 ## 产品资料
 
@@ -32,7 +35,7 @@ ${materialsMd(project.materials)}
    用户会在 launchPage 的对话框里回答，下一轮你会收到答案。不要使用任何交互式提问工具。
 3. 用户框选预览中的元素时，你会收到元素的 CSS 选择器、HTML 片段和当时页面的滚动进度。
    请据此在 \`./${SITE_DIRNAME}/src\` 里定位源码再修改；只改用户指出的部分，不要顺手重做其他地方。
-4. 用中文回复，简洁说明你做了什么、下一步是什么。
+4. Reply in English. Briefly explain what you did and what comes next.
 `;
 }
 

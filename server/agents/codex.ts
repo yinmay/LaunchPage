@@ -38,16 +38,16 @@ export const runCodexTurn: RunTurn = (opts, cb) => {
       const item = toChatItem(ev.item as Rec, type === "item.completed");
       if (item) cb.onItem(item);
     } else if (type === "turn.failed") {
-      failure = String(((ev.error as Rec) ?? {}).message ?? "Codex 本轮失败");
+      failure = String(((ev.error as Rec) ?? {}).message ?? "Codex turn failed");
     } else if (type === "error") {
-      failure = String(ev.message ?? "Codex 出错");
+      failure = String(ev.message ?? "Codex Error");
     }
   });
   onLines(child.stderr!, (l) => stderr.push(l));
 
   const done = new Promise<TurnResult>((resolve) => {
     child.on("error", (err) =>
-      resolve({ ok: false, stopped, error: `无法启动 codex：${err.message}` }),
+      resolve({ ok: false, stopped, error: `Could not start Codex: ${err.message}` }),
     );
     child.on("close", (code) => {
       if (stopped) return resolve({ ok: false, stopped: true });
@@ -55,7 +55,7 @@ export const runCodexTurn: RunTurn = (opts, cb) => {
       resolve({
         ok: false,
         stopped: false,
-        error: failure ?? (stderr.toString() || `codex 退出码 ${code}`),
+        error: failure ?? (stderr.toString() || `Codex exit code ${code}`),
       });
     });
   });
@@ -92,7 +92,7 @@ function toChatItem(item: Rec | undefined, completed: boolean): ChatItem | null 
       return {
         id,
         kind: "tool",
-        title: "运行命令",
+        title: "Run command",
         detail: clip(String(item.command ?? ""), 300),
         status: status(),
         at,
@@ -102,7 +102,7 @@ function toChatItem(item: Rec | undefined, completed: boolean): ChatItem | null 
       return {
         id,
         kind: "tool",
-        title: `修改 ${changes.length || ""} 个文件`.replace("  ", " "),
+        title: `Edit ${changes.length || ""} files`.replace("  ", " "),
         detail: clip(changes.map((c) => String(c.path ?? "")).join("\n"), 400),
         status: status(),
         at,
@@ -112,16 +112,16 @@ function toChatItem(item: Rec | undefined, completed: boolean): ChatItem | null 
       return {
         id,
         kind: "tool",
-        title: `调用 ${item.server ?? ""} · ${item.tool ?? ""}`,
+        title: `Call ${item.server ?? ""} · ${item.tool ?? ""}`,
         status: status(),
         at,
       };
     case "web_search":
-      return { id, kind: "tool", title: "联网搜索", detail: String(item.query ?? ""), status: status(), at };
+      return { id, kind: "tool", title: "Search the web", detail: String(item.query ?? ""), status: status(), at };
     case "error":
       // 实测（codex-cli 0.157）：配置告警等不致命的提示也以 error item 出现，真正的失败走 turn.failed。
       // 所以这里只作提示，不标红
-      return { id, kind: "system", level: "info", text: `Codex 提示：${String(item.message ?? "")}`, at };
+      return { id, kind: "system", level: "info", text: `Codex notice: ${String(item.message ?? "")}`, at };
     default:
       // reasoning / todo_list 等对用户价值不大，不展示
       return null;

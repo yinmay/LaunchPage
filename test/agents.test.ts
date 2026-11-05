@@ -37,7 +37,7 @@ describe("Claude Code 适配", () => {
     expect(r.sessions[0]).toBe("2a39476b-7d4a-4439-baa8-1fe078838d48");
 
     const list = [...r.items.values()];
-    expect(list[0]).toMatchObject({ kind: "tool", title: "读取 a.txt", status: "done" });
+    expect(list[0]).toMatchObject({ kind: "tool", title: "Read a.txt", status: "done" });
     expect(list[1]).toMatchObject({ kind: "assistant", text: "hello" });
 
     const call = r.call();
@@ -81,7 +81,7 @@ describe("Codex 适配", () => {
     const list = [...r.items.values()];
     // 配置告警是提示而非错误；reasoning 不展示
     expect(list[0]).toMatchObject({ kind: "system", level: "info" });
-    expect(list[1]).toMatchObject({ kind: "tool", title: "运行命令", status: "done" });
+    expect(list[1]).toMatchObject({ kind: "tool", title: "Run command", status: "done" });
     expect(list[2]).toMatchObject({ kind: "assistant", text: "hello" });
     expect(list).toHaveLength(3);
 

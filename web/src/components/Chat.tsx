@@ -52,13 +52,13 @@ export function Chat({ snap, picks, onRemovePick, onSend, onStop, onSwitchAgent 
   };
 
   return (
-    <section className="chat" aria-label="与 Agent 对话">
+    <section className="chat" aria-label="Chat with your agent">
       <div className="chat-head">
         <h2 className="chat-title" title={project.name}>
           {project.name}
         </h2>
         <label className="agent-switch">
-          <span className="sr-only">当前 Agent</span>
+          <span className="sr-only">Current agent</span>
           <select
             value={project.agent}
             disabled={running}
@@ -73,12 +73,12 @@ export function Chat({ snap, picks, onRemovePick, onSend, onStop, onSwitchAgent 
       </div>
 
       <details className="project-context">
-        <summary>产品资料与生成目录</summary>
+        <summary>Product materials and output</summary>
         <div>
-          {project.materials.repoPaths.map((path) => <p key={path}><strong>资料目录</strong><code>{path}</code></p>)}
+          {project.materials.repoPaths.map((path) => <p key={path}><strong>Reference folder</strong><code>{path}</code></p>)}
           {project.materials.urls.map((url) => <p key={url}><a href={url} target="_blank" rel="noreferrer">{url}</a></p>)}
           {project.materials.notes && <p className="context-notes">{project.materials.notes}</p>}
-          <p><strong>Landing Page 代码</strong><code>{project.dir}/site</code></p>
+          <p><strong>Landing Page source</strong><code>{project.dir}/site</code></p>
         </div>
       </details>
 
@@ -97,14 +97,14 @@ export function Chat({ snap, picks, onRemovePick, onSend, onStop, onSwitchAgent 
         {running && (
           <div className="working" role="status">
             <span className="dot-pulse" aria-hidden />
-            {AGENT_LABEL[project.agent]} 正在工作…
+            {AGENT_LABEL[project.agent]} is working…
           </div>
         )}
       </div>
 
       <div className="composer">
         {picks.length > 0 && (
-          <ul className="pick-chips" aria-label="已框选的元素">
+          <ul className="pick-chips" aria-label="Selected elements">
             {picks.map((p, i) => (
               <li key={`${p.selector}-${i}`} className="pick-chip" title={p.selector}>
                 <span className="pick-tag">{p.tag}</span>
@@ -112,7 +112,7 @@ export function Chat({ snap, picks, onRemovePick, onSend, onStop, onSwitchAgent 
                 <button
                   type="button"
                   className="pick-remove"
-                  aria-label={`移除框选的元素 ${p.text || p.tag}`}
+                  aria-label={`Remove selected element ${p.text || p.tag}`}
                   onClick={() => onRemovePick(i)}
                 >
                   ×
@@ -127,7 +127,7 @@ export function Chat({ snap, picks, onRemovePick, onSend, onStop, onSwitchAgent 
           </div>
         )}
         <label htmlFor="composer-input" className="sr-only">
-          给 Agent 的消息
+          Message your agent
         </label>
         <textarea
           id="composer-input"
@@ -137,17 +137,17 @@ export function Chat({ snap, picks, onRemovePick, onSend, onStop, onSwitchAgent 
           onKeyDown={onKey}
           placeholder={
             picks.length
-              ? "说说框选的这部分要怎么改…"
+              ? "Describe how to change your selection…"
               : running
-                ? "Agent 正在工作，完成后再发送"
-                : "回答 Agent 的问题，或告诉它要改什么"
+                ? "Your agent is working. Send a message when it finishes."
+                : "Answer your agent or describe what to change"
           }
         />
         <div className="composer-bar">
-          <span className="hint">Enter 发送 · Shift+Enter 换行</span>
+          <span className="hint">Enter to send · Shift+Enter for a new line</span>
           {running ? (
             <button type="button" className="btn btn-danger" onClick={onStop}>
-              停止
+              Stop
             </button>
           ) : (
             <button
@@ -156,7 +156,7 @@ export function Chat({ snap, picks, onRemovePick, onSend, onStop, onSwitchAgent 
               onClick={send}
               disabled={!text.trim() || sending}
             >
-              发送
+              Send
             </button>
           )}
         </div>
@@ -171,7 +171,7 @@ function ChatRow({ item }: { item: ChatItem }) {
       return (
         <div className="msg msg-user">
           {item.picks && item.picks.length > 0 && (
-            <div className="msg-picks">框选了 {item.picks.length} 个元素</div>
+            <div className="msg-picks">Selected {item.picks.length} elements</div>
           )}
           <div className="msg-text">{item.text}</div>
         </div>
@@ -205,4 +205,4 @@ function ChatRow({ item }: { item: ChatItem }) {
   }
 }
 
-const TOOL_STATUS = { running: "进行中", done: "完成", error: "出错" } as const;
+const TOOL_STATUS = { running: "In progress", done: "Done", error: "Error" } as const;

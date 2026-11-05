@@ -50,7 +50,7 @@ export function createInjectingProxy(targetPort: number): http.Server {
     );
     upstream.on("error", (err) => {
       if (!res.headersSent) res.writeHead(502, { "content-type": "text/plain; charset=utf-8" });
-      res.end(`预览服务暂时不可用：${err.message}`);
+      res.end(`Preview is temporarily unavailable: ${err.message}`);
     });
     req.pipe(upstream);
   });

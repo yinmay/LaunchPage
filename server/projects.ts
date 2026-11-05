@@ -89,9 +89,9 @@ export async function loadItems(p: Project): Promise<ChatItem[]> {
 
 async function validate(input: CreateProjectInput): Promise<CreateProjectInput> {
   const name = String(input?.name ?? "").trim();
-  if (!name || name.length > 60) throw new ValidationError("产品名不能为空，且不超过 60 个字");
+  if (!name || name.length > 60) throw new ValidationError("Product name is required and must be at most 60 characters");
   if (input.agent !== "claude" && input.agent !== "codex") {
-    throw new ValidationError("请选择 Claude Code 或 Codex");
+    throw new ValidationError("Select Claude Code or Codex");
   }
   const m = input.materials ?? { repoPaths: [], urls: [], notes: "" };
   const urls = (m.urls ?? []).map((s) => s.trim()).filter(Boolean);
@@ -108,12 +108,12 @@ async function validate(input: CreateProjectInput): Promise<CreateProjectInput> 
     }
     // 明确写了路径却找不到，多半是手误；静默忽略会让 Agent 拿不到资料，所以仍然提示
     const s = await stat(p).catch(() => null);
-    if (!s?.isDirectory()) throw new ValidationError(`目录不存在：${raw}`);
+    if (!s?.isDirectory()) throw new ValidationError(`Directory not found: ${raw}`);
     repoPaths.push(p);
   }
   const notes = [
     String(m.notes ?? "").trim(),
-    ...repoNotes.map((t) => `关于代码库：${t}`),
+    ...repoNotes.map((t) => `Repository notes: ${t}`),
   ]
     .filter(Boolean)
     .join("\n\n")
@@ -123,10 +123,10 @@ async function validate(input: CreateProjectInput): Promise<CreateProjectInput> 
     try {
       ok = ["http:", "https:"].includes(new URL(u).protocol);
     } catch {}
-    if (!ok) throw new ValidationError(`网址格式不对：${u}`);
+    if (!ok) throw new ValidationError(`Invalid URL: ${u}`);
   }
   if (!repoPaths.length && !urls.length && !notes.trim()) {
-    throw new ValidationError("至少提供一项产品资料：代码库、网址或文字说明");
+    throw new ValidationError("Provide at least one repository, URL, or description");
   }
   return { name, agent: input.agent, materials: { repoPaths, urls, notes } };
 }

@@ -35,7 +35,7 @@ export function NewProject({ onCreated }: { onCreated: (p: Project) => void }) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!agent) return setError("请选择一个本机 Agent");
+    if (!agent) return setError("Select a local agent");
     setSubmitting(true);
     setError(null);
     try {
@@ -55,37 +55,37 @@ export function NewProject({ onCreated }: { onCreated: (p: Project) => void }) {
   return (
     <div className="new-project">
       <div className="new-hero">
-        <h1>把产品资料交给你的 Agent，得到一个首发用的 Landing Page</h1>
+        <h1>Turn your product materials into a launch-ready landing page</h1>
         <p className="muted">
-          launchPage 调度你本机的 Claude Code 或 Codex 来生成页面，生成过程中右侧实时预览。
-          哪里不满意，直接在预览里框选，告诉 Agent 怎么改。
+          launchPage uses your local Claude Code or Codex to build your page with a live preview on the right.
+          Select anything in the preview and tell your agent what to change.
         </p>
       </div>
 
       {skillMissing && (
         <div className="banner banner-warn" role="alert">
-          没有找到 Landing Page skill：<code>{skillMissing}</code>。请用环境变量
-          <code>LAUNCHPAGE_LANDING_SKILL</code> 指定 skill 目录后重启。
+          Landing Page skill not found: <code>{skillMissing}</code>. Set the environment variable 
+          <code>LAUNCHPAGE_LANDING_SKILL</code> to the skill directory and restart.
         </div>
       )}
 
       <form className="card form" onSubmit={submit}>
         <div className="field">
-          <label htmlFor="np-name">产品名</label>
+          <label htmlFor="np-name">Product name</label>
           <input
             id="np-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="例如：CanvasAgents"
+            placeholder="For example: CanvasAgents"
             maxLength={60}
             required
           />
         </div>
 
         <fieldset className="field">
-          <legend>用哪个 Agent 来做</legend>
+          <legend>Choose your agent</legend>
           {agents === null ? (
-            <p className="muted">正在检测本机 Agent…</p>
+            <p className="muted">Detecting local agents…</p>
           ) : (
             <div className="agent-grid">
               {agents.map((a) => (
@@ -103,7 +103,7 @@ export function NewProject({ onCreated }: { onCreated: (p: Project) => void }) {
                   />
                   <span className="agent-name">{a.label}</span>
                   <span className="agent-meta">
-                    {a.available ? `已安装 · v${a.version}` : "未检测到，请先安装"}
+                    {a.available ? `Installed · v${a.version}` : "Not found. Install to continue."}
                   </span>
                 </label>
               ))}
@@ -112,37 +112,37 @@ export function NewProject({ onCreated }: { onCreated: (p: Project) => void }) {
         </fieldset>
 
         <div className="field">
-          <label htmlFor="np-repos">代码库 / 资料目录（可选）</label>
+          <label htmlFor="np-repos">Repository / reference folders (optional)</label>
           <textarea
             id="np-repos"
             rows={2}
             value={repos}
             onChange={(e) => setRepos(e.target.value)}
-            placeholder="/Users/you/workspace/my-product（每行一个本机路径；没有就留空）"
+            placeholder="/Users/you/workspace/my-product (one local path per line; leave blank if none)"
           />
         </div>
 
         <div className="field">
-          <label htmlFor="np-urls">产品网址</label>
+          <label htmlFor="np-urls">Product URLs</label>
           <textarea
             id="np-urls"
             rows={2}
             value={urls}
             onChange={(e) => setUrls(e.target.value)}
-            placeholder="https://my-product.example.com（每行一个，线上或预发布环境都可以）"
+            placeholder="https://my-product.example.com (one per line; production or staging)"
           />
         </div>
 
         <div className="field">
-          <label htmlFor="np-notes">补充说明（可选）</label>
+          <label htmlFor="np-notes">Additional notes (optional)</label>
           <textarea
             id="np-notes"
             rows={4}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="想强调的卖点、目标用户、参考网站……"
+            placeholder="Key benefits, target audience, reference websites…"
           />
-          <p className="hint">代码库、网址、补充说明至少填一项。</p>
+          <p className="hint">Provide at least one repository, URL, or note.</p>
         </div>
 
         {error && (
@@ -153,10 +153,10 @@ export function NewProject({ onCreated }: { onCreated: (p: Project) => void }) {
 
         <div className="form-actions">
           <p className="hint">
-            使用本机 Agent 的登录状态。生成的页面和对话保存在本地。
+            Uses your local agent login. Generated pages and conversations are saved locally.
           </p>
           <button type="submit" className="btn btn-primary" disabled={submitting || !agent}>
-            {submitting ? "正在创建…" : "开始生成"}
+            {submitting ? "Creating…" : "Start generating"}
           </button>
         </div>
       </form>

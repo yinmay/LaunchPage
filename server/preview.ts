@@ -79,13 +79,13 @@ export class SitePreview {
       onLines(child.stderr!, (l) => tail.push(l));
       const timer = setTimeout(() => {
         killGroup(child);
-        reject(new Error("pnpm install 超时"));
+        reject(new Error("pnpm install timed out"));
       }, INSTALL_TIMEOUT_MS);
-      child.on("error", (e) => reject(new Error(`无法运行 pnpm：${e.message}`)));
+      child.on("error", (e) => reject(new Error(`Could not run pnpm: ${e.message}`)));
       child.on("exit", (code) => {
         clearTimeout(timer);
         if (code === 0) resolve();
-        else reject(new Error(`pnpm install 失败：\n${tail}`));
+        else reject(new Error(`pnpm install failed: \n${tail}`));
       });
     });
   }
@@ -105,14 +105,14 @@ export class SitePreview {
       // 只有当前这一个 vite 意外退出才报错；stop()/restart() 主动杀掉的不算
       if (this.vite === vite && this.state.status === "ready") {
         this.stop();
-        this.set({ status: "error", error: `预览服务退出（${code}）：\n${tail}` });
+        this.set({ status: "error", error: `Preview server exited (${code}): \n${tail}` });
       }
     });
 
     const deadline = Date.now() + READY_TIMEOUT_MS;
     while (!(await responds(vitePort))) {
-      if (vite.exitCode !== null) throw new Error(`vite 启动失败：\n${tail}`);
-      if (Date.now() > deadline) throw new Error(`vite 启动超时：\n${tail}`);
+      if (vite.exitCode !== null) throw new Error(`Vite failed to start: \n${tail}`);
+      if (Date.now() > deadline) throw new Error(`Vite startup timed out: \n${tail}`);
       await new Promise((r) => setTimeout(r, 400));
     }
 

@@ -89,7 +89,7 @@ export interface SendMessageInput {
 /** 预览 iframe → 宿主页 的 postMessage 消息 */
 export type PickerToHost =
   | { source: "launchpage-preview"; type: "ready" }
-  | { source: "launchpage-preview"; type: "picked"; element: PickedElement }
+  | { source: "launchpage-preview"; type: "picked"; element: PickedElement; additive?: boolean }
   | { source: "launchpage-preview"; type: "pick-mode-off" };
 
 /** 宿主页 → 预览 iframe 的 postMessage 消息 */

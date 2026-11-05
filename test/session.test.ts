@@ -70,7 +70,7 @@ describe("ProjectSession", () => {
     s.stop();
     await waitIdle(s);
     process.env.FAKE_AGENT_MODE = "";
-    expect(s.snapshot().items.at(-1)).toMatchObject({ kind: "system", text: "已停止本轮。" });
+    expect(s.snapshot().items.at(-1)).toMatchObject({ kind: "system", text: "Turn stopped." });
   });
 
   it("并发提交时只启动一轮，不会在落盘期间重复启动 Agent", async () => {

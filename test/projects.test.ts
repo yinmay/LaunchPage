@@ -19,7 +19,7 @@ describe("createProject 资料校验", () => {
       materials: { repoPaths: ["没有对应的代码库"], urls: ["https://v0.app/"], notes: "看看官网素材" },
     });
     expect(p.materials.repoPaths).toEqual([]);
-    expect(p.materials.notes).toBe("看看官网素材\n\n关于代码库：没有对应的代码库");
+    expect(p.materials.notes).toBe("看看官网素材\n\nRepository notes: 没有对应的代码库");
   });
 
   it("支持 ~/ 开头的路径", async () => {
@@ -33,7 +33,7 @@ describe("createProject 资料校验", () => {
   it("明确写了路径但目录不存在时仍然提示（多半是手误）", async () => {
     await expect(
       projects.createProject({ ...base, materials: { repoPaths: ["/no/such/dir"], urls: [], notes: "" } }),
-    ).rejects.toThrow("目录不存在");
+    ).rejects.toThrow("Directory not found");
   });
 
   it("只在代码库一栏写了文字也算提供了资料", async () => {

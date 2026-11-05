@@ -7,6 +7,7 @@ import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
 import type { AgentKind, CreateProjectInput, SendMessageInput } from "../shared/types.ts";
 import { detectAgents } from "./agents/index.ts";
+import { captureMaterials } from "./capture.ts";
 import { IS_PROD, LANDING_SKILL_DIR, SERVER_PORT } from "./config.ts";
 import { killAllChildren } from "./proc.ts";
 import { createProject, listProjects, ValidationError } from "./projects.ts";
@@ -37,7 +38,7 @@ app.onError((err, c) => {
   if (err instanceof BusyError) return c.json({ error: err.message }, 409);
   if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
   console.error(err);
-  return c.json({ error: err.message || "服务器内部错误" }, 500);
+  return c.json({ error: err.message || "Internal server error" }, 500);
 });
 
 app.get("/api/health", (c) =>
@@ -52,7 +53,7 @@ app.post("/api/projects", async (c) => {
   const input = await c.req.json<CreateProjectInput>();
   const agents = await detectAgents();
   if (!agents.find((a) => a.kind === input.agent)?.available) {
-    throw new ValidationError("本机没有检测到所选的 Agent，请先安装或换一个");
+    throw new ValidationError("Selected agent not found locally. Install it or choose another agent.");
   }
   const project = await createProject(input);
   const session = await ProjectSession.get(project.id);
@@ -62,18 +63,18 @@ app.post("/api/projects", async (c) => {
 
 async function sessionOr404(id: string) {
   const s = await ProjectSession.get(id);
-  if (!s) throw new HTTPException(404, { message: "项目不存在" });
+  if (!s) throw new HTTPException(404, { message: "Project not found" });
   return s;
 }
 
 app.get("/api/projects/:id", async (c) => {
   const s = await ProjectSession.get(c.req.param("id"));
-  return s ? c.json(s.snapshot()) : c.json({ error: "项目不存在" }, 404);
+  return s ? c.json(s.snapshot()) : c.json({ error: "Project not found" }, 404);
 });
 
 app.get("/api/projects/:id/events", async (c) => {
   const s = await ProjectSession.get(c.req.param("id"));
-  if (!s) return c.json({ error: "项目不存在" }, 404);
+  if (!s) return c.json({ error: "Project not found" }, 404);
   return streamSSE(c, async (stream) => {
     const unsubscribe = s.subscribe((ev) => {
       void stream.writeSSE({ data: JSON.stringify(ev) });
@@ -101,11 +102,16 @@ app.post("/api/projects/:id/stop", async (c) => {
   return c.json({ ok: true });
 });
 
+app.post("/api/projects/:id/capture", async (c) => {
+  const s = await sessionOr404(c.req.param("id"));
+  return c.json(await captureMaterials(s.project));
+});
+
 app.post("/api/projects/:id/agent", async (c) => {
   const { agent } = await c.req.json<{ agent: AgentKind }>();
-  if (agent !== "claude" && agent !== "codex") throw new ValidationError("未知的 Agent");
+  if (agent !== "claude" && agent !== "codex") throw new ValidationError("Unknown agent");
   if (!(await detectAgents()).some((a) => a.kind === agent && a.available)) {
-    throw new ValidationError("本机没有检测到所选的 Agent");
+    throw new ValidationError("Selected agent not found locally");
   }
   await (await sessionOr404(c.req.param("id"))).setAgent(agent);
   return c.json({ ok: true });

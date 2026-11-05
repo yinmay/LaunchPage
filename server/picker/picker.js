@@ -50,7 +50,7 @@
     active = on;
     mount();
     document.documentElement.classList.toggle("launchpage-picking", on);
-    drag = null; // 开关切换时总是丢掉进行中的拖框
+    drag = null; // 开关切换时总是丢掉In progress的拖框
     if (!on) {
       hoverEl = null;
       hoverBox.style.display = band.style.display = label.style.display = "none";
@@ -105,7 +105,7 @@
     const b = box(`2px solid ${ACCENT}`, "rgba(124,92,255,.18)");
     layer.append(b);
     marks.push({ el, box: b });
-    send({ type: "picked", element: describe(el) });
+    send({ type: "picked", element: describe(el), additive });
   }
 
   function clearMarks() {

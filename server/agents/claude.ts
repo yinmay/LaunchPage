@@ -75,7 +75,7 @@ export const runClaudeTurn: RunTurn = (opts, cb) => {
 
   const done = new Promise<TurnResult>((resolve) => {
     child.on("error", (err) =>
-      resolve({ ok: false, stopped, error: `无法启动 claude：${err.message}` }),
+      resolve({ ok: false, stopped, error: `Could not start Claude: ${err.message}` }),
     );
     child.on("close", (code) => {
       if (stopped) return resolve({ ok: false, stopped: true });
@@ -83,7 +83,7 @@ export const runClaudeTurn: RunTurn = (opts, cb) => {
       resolve({
         ok: false,
         stopped: false,
-        error: resultError ?? (stderr.toString() || `claude 退出码 ${code}`),
+        error: resultError ?? (stderr.toString() || `Claude exit code ${code}`),
       });
     });
   });
@@ -112,48 +112,48 @@ function toolItem(id: string, name: string, input: Rec): Extract<ChatItem, { kin
   let detail: string | undefined;
   switch (name) {
     case "Bash":
-      title = "运行命令";
+      title = "Run command";
       detail = clip(s("command"), 300);
       break;
     case "Read":
-      title = `读取 ${basename(file)}`;
+      title = `Read ${basename(file)}`;
       detail = file;
       break;
     case "Write":
-      title = `写入 ${basename(file)}`;
+      title = `Write ${basename(file)}`;
       detail = file;
       break;
     case "Edit":
     case "MultiEdit":
-      title = `修改 ${basename(file)}`;
+      title = `Edit ${basename(file)}`;
       detail = file;
       break;
     case "Glob":
     case "Grep":
-      title = "搜索文件";
+      title = "Search files";
       detail = clip(s("pattern"), 200);
       break;
     case "WebFetch":
-      title = "读取网页";
+      title = "Fetch web page";
       detail = s("url");
       break;
     case "WebSearch":
-      title = "联网搜索";
+      title = "Search the web";
       detail = s("query");
       break;
     case "Skill":
-      title = `使用 skill ${s("skill") || s("command")}`;
+      title = `Use skill ${s("skill") || s("command")}`;
       break;
     case "TodoWrite":
-      title = "更新任务计划";
+      title = "Update task plan";
       break;
     case "Task":
     case "Agent":
-      title = "派出子 Agent";
+      title = "Delegate to agent";
       detail = clip(s("description") || s("prompt"), 200);
       break;
     default:
-      title = name.startsWith("mcp__") ? `调用 ${name.split("__").slice(1).join(" · ")}` : name;
+      title = name.startsWith("mcp__") ? `Call ${name.split("__").slice(1).join(" · ")}` : name;
   }
   return { id, kind: "tool", title, detail, status: "running", at: now() };
 }

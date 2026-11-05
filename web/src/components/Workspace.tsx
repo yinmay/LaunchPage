@@ -13,14 +13,14 @@ export function Workspace({ projectId }: { projectId: string }) {
   if (error && !snap) {
     return (
       <div className="center-state" role="alert">
-        <p>项目加载失败：{error}</p>
+        <p>Failed to load project: {error}</p>
         <a className="btn btn-ghost" href="#/">
-          返回
+          Back
         </a>
       </div>
     );
   }
-  if (!snap) return <div className="center-state muted">加载中…</div>;
+  if (!snap) return <div className="center-state muted">Loading…</div>;
 
   const clearPicks = () => {
     setPicks([]);
@@ -49,7 +49,7 @@ export function Workspace({ projectId }: { projectId: string }) {
         preview={snap.preview}
         running={snap.running}
         clearToken={clearToken}
-        onPick={(el) => setPicks((prev) => [...prev, el].slice(-10))}
+        onPick={(el, additive) => setPicks((prev) => additive ? [...prev, el].slice(-10) : [el])}
       />
     </div>
   );

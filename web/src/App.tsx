@@ -32,7 +32,7 @@ export function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <a className="brand" href="#/" aria-label="launchPage 首页">
+        <a className="brand" href="#/" aria-label="launchPage home">
           <span className="brand-mark" aria-hidden>
             ▶
           </span>
@@ -41,12 +41,12 @@ export function App() {
         <div className="topbar-right">
           {projects.length > 0 && (
             <label className="project-switch">
-              <span className="sr-only">切换项目</span>
+              <span className="sr-only">Switch project</span>
               <select
                 value={projectId ?? ""}
                 onChange={(e) => go(e.target.value || null)}
               >
-                <option value="">选择项目…</option>
+                <option value="">Select a project…</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -56,7 +56,7 @@ export function App() {
             </label>
           )}
           <button type="button" className="btn btn-ghost" onClick={() => go(null)}>
-            + 新建项目
+            + New project
           </button>
         </div>
       </header>

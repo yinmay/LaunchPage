@@ -18,7 +18,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     body: body !== undefined ? JSON.stringify(body) : method !== "GET" ? "{}" : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `请求失败（${res.status}）`);
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
   return data as T;
 }
 
@@ -53,7 +53,7 @@ export function useProject(id: string) {
   useEffect(() => {
     setSnap(null);
     const es = new EventSource(`/api/projects/${id}/events`);
-    es.onerror = () => setError("连接暂时中断，正在自动重连…");
+    es.onerror = () => setError("Connection interrupted. Reconnecting…");
     es.onmessage = (msg) => {
       const ev = JSON.parse(msg.data) as ServerEvent;
       setError(null);
