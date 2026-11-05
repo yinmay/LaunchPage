@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AI Native Builder">
+  <rect width="64" height="64" rx="14" fill="#12161c"/>
+  <path d="M32 12 L52 48 L12 48 Z" fill="none" stroke="#3dd68c" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="32" cy="12" r="4.5" fill="#3dd68c"/>
+  <circle cx="52" cy="48" r="4.5" fill="#a78bfa"/>
+  <circle cx="12" cy="48" r="4.5" fill="#f5a524"/>
+</svg>

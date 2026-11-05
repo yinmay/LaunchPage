@@ -1,0 +1,8 @@
+{"type":"thread.started","thread_id":"01a19596-de76-78e2-b8b9-773cb4fa4e95"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Codex is ignoring 2 unrecognized configuration settings."}}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_2","type":"reasoning","text":"thinking"}}
+{"type":"item.started","item":{"id":"item_3","type":"command_execution","command":"/bin/zsh -c 'cat a.txt'","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_3","type":"command_execution","command":"/bin/zsh -c 'cat a.txt'","aggregated_output":"hello\n","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_4","type":"agent_message","text":"hello"}}
+{"type":"turn.completed","usage":{"input_tokens":1,"output_tokens":1}}

@@ -1,0 +1,2 @@
+#!/bin/sh
+FAKE_AGENT_NAME=codex exec node "$(dirname "$0")/fake-agent.mjs" "$@"

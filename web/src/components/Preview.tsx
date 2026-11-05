@@ -1,0 +1,240 @@
+import { useEffect, useRef, useState } from "react";
+import type {
+  HostToPicker,
+  PickedElement,
+  PickerToHost,
+  PreviewState,
+} from "../../../shared/types.ts";
+import { api } from "../api.ts";
+
+interface Props {
+  projectId: string;
+  preview: PreviewState;
+  running: boolean;
+  clearToken: number;
+  onPick: (el: PickedElement) => void;
+}
+
+type Tab = "landing" | "video";
+// 对联合类型逐个去掉 source 字段（普通 Omit 会把联合压扁）
+type HostMsg = HostToPicker extends infer T ? (T extends HostToPicker ? Omit<T, "source"> : never) : never;
+type Device = "desktop" | "mobile";
+
+export function Preview({ projectId, preview, running, clearToken, onPick }: Props) {
+  const [tab, setTab] = useState<Tab>("landing");
+  const [device, setDevice] = useState<Device>("desktop");
+  const [picking, setPicking] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const ready = preview.status === "ready" && preview.url;
+
+  // iframe 里的框选脚本报 ready 之后才发消息：加载/刷新途中 contentWindow 还是 about:blank，
+  // 这时按预览 origin 发 postMessage 会被浏览器拒收并打警告
+  const frameReady = useRef(false);
+  const post = (msg: HostMsg) => {
+    if (!preview.url || !frameReady.current) return;
+    frame.current?.contentWindow?.postMessage(
+      { source: "launchpage-host", ...msg },
+      new URL(preview.url).origin,
+    );
+  };
+
+  // 预览地址变了或手动刷新：等新文档重新报 ready
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 这两个值变化即代表 iframe 换了文档
+  useEffect(() => {
+    frameReady.current = false;
+  }, [preview.url, reloadKey]);
+
+  // 只接受来自当前预览 iframe 的消息
+  useEffect(() => {
+    if (!preview.url) return;
+    const origin = new URL(preview.url).origin;
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== origin || e.source !== frame.current?.contentWindow) return;
+      const d = e.data as PickerToHost;
+      if (d?.source !== "launchpage-preview") return;
+      if (d.type === "picked") onPick(d.element);
+      if (d.type === "pick-mode-off") setPicking(false);
+      if (d.type === "ready") {
+        // 每次文档加载（含 vite 整页刷新）都会报 ready：把当前框选状态同步过去
+        frameReady.current = true;
+        post({ type: "pick-mode", on: picking });
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: post 只依赖 preview.url
+  }, [preview.url, picking, onPick]);
+
+  useEffect(() => {
+    post({ type: "pick-mode", on: picking });
+    // biome-ignore lint/correctness/useExhaustiveDependencies: 只在开关变化时同步
+  }, [picking]);
+
+  useEffect(() => {
+    if (clearToken > 0) post({ type: "clear" });
+    // biome-ignore lint/correctness/useExhaustiveDependencies: 只在清除信号变化时同步
+  }, [clearToken]);
+
+  // 焦点在宿主页（比如输入框）时，Esc 到不了 iframe，这里也要能退出框选
+  useEffect(() => {
+    if (!picking) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPicking(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [picking]);
+
+  // 预览不可用时自动退出框选
+  useEffect(() => {
+    if (!ready) setPicking(false);
+  }, [ready]);
+
+  return (
+    <section className="preview" aria-label="预览">
+      <div className="preview-bar">
+        <div className="tabs" role="tablist" aria-label="素材类型">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "landing"}
+            className={`tab${tab === "landing" ? " is-active" : ""}`}
+            onClick={() => setTab("landing")}
+          >
+            Landing Page
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "video"}
+            className={`tab${tab === "video" ? " is-active" : ""}`}
+            onClick={() => setTab("video")}
+          >
+            宣传视频 <span className="badge">即将推出</span>
+          </button>
+        </div>
+
+        {tab === "landing" && (
+          <div className="preview-tools">
+            <button
+              type="button"
+              className={`btn btn-tool${picking ? " is-on" : ""}`}
+              aria-pressed={picking}
+              disabled={!ready}
+              onClick={() => setPicking((v) => !v)}
+              title="在预览里点选或拖框选中元素，Esc 退出"
+            >
+              ⌖ {picking ? "框选中（Esc 退出）" : "框选"}
+            </button>
+            <div className="seg" role="group" aria-label="预览尺寸">
+              {(["desktop", "mobile"] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  className={`seg-btn${device === d ? " is-on" : ""}`}
+                  aria-pressed={device === d}
+                  onClick={() => setDevice(d)}
+                >
+                  {d === "desktop" ? "桌面" : "手机"}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="btn btn-tool"
+              disabled={!ready}
+              onClick={() => setReloadKey((k) => k + 1)}
+              aria-label="刷新预览"
+              title="刷新预览"
+            >
+              ↻
+            </button>
+            {ready && (
+              <a
+                className="btn btn-tool"
+                href={preview.url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="在新窗口打开预览"
+                title="在新窗口打开"
+              >
+                ↗
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="preview-body">
+        {tab === "video" ? (
+          <ComingSoon />
+        ) : ready ? (
+          <div className={`frame-wrap frame-${device}`}>
+            <iframe
+              key={reloadKey}
+              ref={frame}
+              src={preview.url}
+              title="Landing Page 实时预览"
+              className="frame"
+            />
+          </div>
+        ) : (
+          <PreviewPlaceholder
+            preview={preview}
+            running={running}
+            onRestart={() => api.restartPreview(projectId)}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PreviewPlaceholder({
+  preview,
+  running,
+  onRestart,
+}: {
+  preview: PreviewState;
+  running: boolean;
+  onRestart: () => void;
+}) {
+  if (preview.status === "error") {
+    return (
+      <div className="center-state" role="alert">
+        <p>预览启动失败</p>
+        <pre className="error-log">{preview.error}</pre>
+        <button type="button" className="btn btn-primary" onClick={onRestart}>
+          重新启动预览
+        </button>
+      </div>
+    );
+  }
+  const text =
+    preview.status === "installing"
+      ? "正在安装站点依赖…"
+      : preview.status === "starting"
+        ? "正在启动预览…"
+        : running
+          ? "Agent 正在研究产品、起草方案，站点生成后会自动出现在这里"
+          : "还没有生成站点。在左侧告诉 Agent 继续即可。";
+  return (
+    <div className="center-state muted" role="status">
+      <div className="placeholder-icon" aria-hidden>
+        ▢
+      </div>
+      <p>{text}</p>
+    </div>
+  );
+}
+
+function ComingSoon() {
+  return (
+    <div className="center-state">
+      <div className="placeholder-icon" aria-hidden>
+        ▶
+      </div>
+      <p>宣传视频即将推出</p>
+      <p className="muted">下一阶段会基于同一份产品资料和分镜，生成可预览的产品宣传片。</p>
+    </div>
+  );
+}

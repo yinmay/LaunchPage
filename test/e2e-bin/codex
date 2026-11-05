@@ -1,0 +1,2 @@
+#!/bin/sh
+E2E_AGENT_KIND=codex exec node "$(dirname "$0")/scripted-agent.mjs" "$@"
